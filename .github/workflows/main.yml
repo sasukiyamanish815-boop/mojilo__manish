@@ -28,44 +28,38 @@ jobs:
           mkdir -p project
           unzip -q "$ZIP_FILE" -d project
 
-          echo "Extracted files:"
-          find project -maxdepth 3 -type f | head -100
+          echo "ZIP extracted successfully."
 
       - name: Detect Android Project
         shell: bash
         run: |
           set -e
 
-          if [ -f "project/settings.gradle" ] || \
-             [ -f "project/settings.gradle.kts" ]; then
-            echo "Android project found in project/"
-            echo "PROJECT_DIR=project" >> "$GITHUB_ENV"
-          else
-            FOUND=$(find project -type f \( \
-              -name "settings.gradle" -o \
-              -name "settings.gradle.kts" \
-            \) -print -quit)
+          FOUND=$(find project -type f \( \
+            -name "settings.gradle" -o \
+            -name "settings.gradle.kts" \
+          \) -print -quit)
 
-            if [ -z "$FOUND" ]; then
-              echo "ERROR: Android Gradle project not found."
-              exit 1
-            fi
-
-            PROJECT_DIR=$(dirname "$FOUND")
-            echo "Android project found at: $PROJECT_DIR"
-            echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          if [ -z "$FOUND" ]; then
+            echo "ERROR: Android Gradle project not found."
+            exit 1
           fi
+
+          PROJECT_DIR=$(dirname "$FOUND")
+
+          echo "Android project found at: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.11.1'
+          gradle-version: "9.3.1"
 
       - name: Build APK
         shell: bash
@@ -74,11 +68,8 @@ jobs:
 
           cd "$PROJECT_DIR"
 
-          echo "Project directory:"
+          echo "Building project from:"
           pwd
-
-          echo "Project files:"
-          ls -la
 
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
@@ -90,9 +81,7 @@ jobs:
       - name: Find APK
         shell: bash
         run: |
-          set -e
-
-          echo "Searching for APK..."
+          echo "Searching for generated APK..."
 
           find "$PROJECT_DIR" \
             -type f \
